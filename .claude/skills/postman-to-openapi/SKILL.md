@@ -53,6 +53,8 @@ When multiple Postman requests share the same HTTP method AND normalized path, c
 - A `description` explaining each variant
 - Union of all request body examples
 
+If two requests share method+path but differ only in auth or headers, collapse them and document the variants in the `description` field.
+
 Keep a running tally: `total_postman_requests` vs `total_openapi_operations`. Explain every discrepancy in the final report.
 
 ---
@@ -70,7 +72,7 @@ Check both collection-level auth and per-request auth overrides. Map to OpenAPI 
 | `apikey` | `apiKey` with `in` (header/query) and `name` |
 | `noauth` | No security applied |
 
-If auth is uniform across all requests, declare it globally. If some requests override auth, apply `security` at the operation level for those.
+**Uniform** = all requests use the same auth type and same credential source. Any deviation (including `noauth` overrides) breaks uniformity — apply per-operation `security` on deviating operations. If uniform, declare globally.
 
 ---
 
@@ -81,7 +83,7 @@ If auth is uniform across all requests, declare it globally. If some requests ov
 The `postman-to-openapi` npm CLI (p2o) handles large files well. Try it first:
 
 ```bash
-# Install if needed
+# Install if needed (skip to Step 4b if npm is unavailable or install fails)
 npm install -g postman-to-openapi
 
 # Convert
@@ -106,13 +108,14 @@ If p2o fails or is unavailable, fall through to Step 4b.
 
 Build the spec manually. Produce a complete OpenAPI 3.0.0 document:
 - `info`: title (from collection name), description, `version: "1.0.0"`
-- `servers`: extract `{{baseurl}}` or actual host
+- `servers`: extract `{{baseurl}}` or actual host. If no consistent base URL exists across requests, use `https://api.example.com` as a placeholder and note it in the report.
 - `paths`: one entry per unique (normalized-path + method); per operation include `operationId` (camelCase), `summary`, `description`, `tags`, `parameters`, `requestBody`, and `responses` (at minimum 200, 400, 401, 403, 404, 500)
 - `components.securitySchemes`: from Phase 3
 
 ### Step 4c — Generate the JSON version
 
 ```bash
+# If js-yaml is not available: npm install js-yaml
 node -e "const y=require('js-yaml'),fs=require('fs');fs.writeFileSync('out.json',JSON.stringify(y.load(fs.readFileSync('out.yaml','utf8')),null,2))"
 ```
 
@@ -144,7 +147,10 @@ If the user provides an existing OpenAPI spec alongside the Postman collection:
 
 1. Read the existing spec
 2. Compare against the freshly generated spec: new endpoints, removed endpoints, modified endpoints, auth changes
-3. Bump `info.version` (patch for minor changes, minor for new endpoints, major for removed/breaking)
+3. Bump `info.version`:
+   - Patch: auth, description, or parameter-metadata changes only
+   - Minor: any new path+method added
+   - Major: any removed path+method, or changed required parameter type
 4. Write a diff report to `<base-name>-openapi-diff.md`
 
 ---
@@ -153,11 +159,12 @@ If the user provides an existing OpenAPI spec alongside the Postman collection:
 
 Self-audit pass before finalizing:
 
-**Coverage checks:**
+**Coverage checks** (per Phase 4b requirements):
 - [ ] Every Postman request's (method + normalized path) has a matching operation
 - [ ] Every enabled query parameter appears in the spec
 - [ ] Every POST/PUT/PATCH with a body has a `requestBody`
 - [ ] Every `{param}` in a path has a corresponding parameter declaration with `in: path`
+- [ ] Every operation has `responses` (at minimum 200, 400, 401, 403, 404, 500)
 
 **Correctness checks:**
 - [ ] No duplicate `operationId` values
@@ -245,5 +252,4 @@ Common fixes:
 
 - **Always try p2o first** — faster and more complete. Focus your effort on the audit: auth mapping, disabled params, MIME types, duplicate operationIds.
 - Use Read tool's `limit`/`offset` to page through large Postman files.
-- When generating YAML manually, write it in a single Write tool call — partial writes corrupt the file.
 - If the collection has 50+ endpoints, prioritize correctness over prettiness.

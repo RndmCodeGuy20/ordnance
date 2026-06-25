@@ -26,6 +26,7 @@ Parse the input:
 
 ```bash
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+if [ -z "$ROOT" ]; then echo "Error: not inside a git repository." && exit 1; fi
 echo "ROOT=$ROOT"
 
 # Detect submodules
@@ -64,20 +65,25 @@ echo "=== UNTRACKED ===" && git ls-files --others --exclude-standard
 
 ### Step 2: Stage if needed
 
-- If already staged: commit only those — do NOT add more.
-- If nothing staged: stage everything. For the root repo, exclude submodule entries to avoid accidental pointer commits:
+- If already staged: commit only those — do NOT add more. Note which unstaged files are excluded in the summary.
+- If nothing staged: stage everything. For the root repo, exclude submodule entries:
   ```bash
   # submodule
   cd <path> && git add -A
 
-  # root only — exclude submodule dirs and any local artefact dirs
-  cd <root> && git add -A -- $(git submodule status | awk '{print ":!" $2}' | tr '\n' ' ')
+  # root only — exclude submodule dirs
+  SUBMODS=$(git submodule status 2>/dev/null | awk '{print ":!" $2}' | tr '\n' ' ')
+  if [ -z "$SUBMODS" ]; then
+    cd <root> && git add -A
+  else
+    cd <root> && git add -A -- $SUBMODS
+  fi
   ```
 
 ### Step 3: Get diff for message generation
 
 ```bash
-cd <path> && git diff --cached
+cd <path> && git diff --cached   # used for auto-generated message below
 ```
 
 ### Step 4: Commit
@@ -95,7 +101,7 @@ cd <path> && git commit -m "<user message>"
 - Under 72 chars, no trailing period
 - Describe *what* the commit does, not *how*
 
-**Body (only if the diff is non-trivial):**
+**Body (only when the subject line cannot fully capture the change — i.e. more than one logical sub-change, or any change that affects a public API or schema):**
 - One blank line after subject, then a bullet list
 - Each bullet: imperative verb + one specific change (Add, Fix, Remove, Update, Extract, etc.)
 - One line per bullet, no trailing periods, no filler words
@@ -129,6 +135,8 @@ cd <path> && git commit -m "$(cat <<'EOF'
 EOF
 )"
 ```
+
+If `git commit` exits non-zero (e.g. pre-commit hook rejection), surface the error verbatim and stop. Do not retry or modify the message.
 
 ---
 
@@ -164,12 +172,11 @@ cd <root> && git commit -m "chore: update submodule pointers"
 ## Rules
 
 1. **Submodules before root** — so root captures updated pointers.
-2. **Respect existing staging** — if files are already staged, commit only those.
+2. **Respect existing staging** — if files are already staged, commit only those. Note excluded unstaged files in the summary.
 3. **Never** force-push, reset --hard, or use --no-verify.
-4. **No `Co-Authored-By` trailers** — ever. One imperative subject line; body only if the subject alone is ambiguous.
-5. **Amend vs new commit** — if the follow-up fix is the same logical change as the immediately-preceding commit AND that commit hasn't been pushed, use `git commit --amend`. Create a new commit only when the change is conceptually distinct.
+4. **No `Co-Authored-By` trailers** — ever. One imperative subject line; body only when subject alone is insufficient.
+5. **Amend vs new commit** — amend only if the new change corrects or completes what the preceding commit intended AND that commit hasn't been pushed. New commit for anything conceptually distinct.
 6. **Never stage local artefact directories** (plans, scratch files) from the root repo.
-7. If user provided a message, use it as-is — do not modify or prefix it.
 
 ## Composability
 

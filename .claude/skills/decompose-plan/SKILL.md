@@ -27,38 +27,19 @@ Parse the input:
 
 ---
 
-## Iron Law
-
-```
-NO PLAN WITHOUT USER QUIZ APPROVAL FIRST
-NO PROCEEDING WITH INACCESSIBLE LINKS
-```
-
-## HARD-GATE
-
-```
-Do NOT write the plan file until the user has approved the breakdown.
-Do NOT proceed if any linked content (GitHub, Figma, Notion) is inaccessible.
-```
-
----
-
 ## Rationalization Prevention
 
 | Excuse | Reality |
 |--------|---------|
-| "The PRD is detailed enough, skip the quiz" | ALWAYS quiz. Users catch blind spots you won't. |
-| "I can't access the Figma link but I have enough context" | Linked content is critical. ABORT. |
+| "The PRD is detailed enough, skip the quiz" | Users catch blind spots you won't. Quiz first. |
 | "This only touches one layer, horizontal slices are fine" | Vertical slices. No exceptions. |
 | "The user seems impatient, skip brainstorming" | Rushing = rework. Brainstorm first. |
 | "This is a small feature, one phase is enough" | Small features still get decomposed. |
 
 ## Red Flags — STOP
 
-- About to write plan without quizzing user
 - Creating horizontal slices (all migrations, all UI, all tests)
 - Putting file names or function signatures in the plan
-- Proceeding after a link returned 404 or auth error
 
 ---
 
@@ -80,26 +61,28 @@ Verify access to any linked content before proceeding:
 - **Figma** → verify MCP server
 - **Notion / Confluence / Linear** → verify access
 
-Do not proceed with partial information.
+If any linked content is inaccessible, stop and tell the user what to set up. Do not proceed with partial information.
 
 ### 2. Load the PRD/issue
 
 Fetch from GitHub, read file, or confirm content is in context.
 
-If the input is a lightweight issue (no user stories, no acceptance criteria), prompt:
+**Lightweight = missing either user stories or acceptance criteria entirely.** If either is absent, prompt:
 > "This issue looks lightweight — what are the key user stories and scope boundaries?"
 
 ### 3. Brainstorm
 
-Use `superpowers:brainstorming` if available to explore intent, clarify scope, and align on requirements before planning. This surfaces blind spots that decomposition alone misses.
+Use `superpowers:brainstorming` if available to explore intent, clarify scope, and align on requirements before planning. If unavailable, ask the user 2-3 scoping questions directly before proceeding.
 
-### 4. Explore the codebase
+### 4. Explore the codebase (conditional)
 
-Understand what exists before slicing. Focus on:
+Explore only when the answer is likely discoverable from existing code. Limit to 2-3 targeted lookups. Focus on:
 - Data model and schema
 - API layer and existing endpoints
 - Auth / permission model
 - Key service boundaries
+
+If the answer is still ambiguous after those lookups, ask the user directly.
 
 ### 5. Identify durable architectural decisions
 
@@ -115,9 +98,9 @@ These go in the plan header so every phase can reference them.
 
 Break the PRD into **tracer bullet** phases. Each phase is a thin vertical slice cutting through ALL layers end-to-end.
 
-Classify each slice as:
-- **HITL** (Human In The Loop): requires human decision-making
-- **AFK** (Away From Keyboard): can be implemented by an agent without human interaction
+**HITL vs AFK definitions:**
+- **AFK** (Away From Keyboard): the full slice can be implemented with no open design decisions, no external approvals, and no user interaction required mid-execution.
+- **HITL** (Human In The Loop): any decision point requires human input — design choice, business logic, external dependency approval. If in doubt, mark as HITL.
 
 <vertical-slice-rules>
 - Each slice delivers a narrow but COMPLETE path through every relevant layer:
@@ -128,7 +111,7 @@ Classify each slice as:
 - A completed slice is demoable or verifiable on its own
 - Prefer many thin slices over few thick ones
 - Do NOT include specific file names, function names, or implementation details
-- DO include durable decisions: route paths, schema shapes, data model names
+- DO include durable decisions: route paths (pattern + method only, not handler path), schema table/model names
 </vertical-slice-rules>
 
 ### 7. Quiz the user
@@ -149,6 +132,8 @@ Ask:
 Iterate until the user approves.
 
 ### 8. Write the plan file
+
+If `./plans/` does not exist, create it before writing.
 
 ```
 ./plans/<feature-name>.md
@@ -204,11 +189,11 @@ A concise description of this vertical slice. Describe end-to-end behavior, not 
 ## Rules
 
 1. **Vertical, not horizontal**: every phase must cut through multiple layers.
-2. **Durable decisions only**: no file names or function signatures — they change.
+2. **Durable decisions only**: no file names or function signatures — they change. Include route patterns and model names.
 3. **Quiz before writing**: never write the plan file until the user approves.
 4. **One plan file per feature**: if re-running, update the existing file.
 5. **Abort on inaccessible links**: stop and tell the user what to set up.
-6. **HITL vs AFK**: if in doubt, mark as HITL.
+6. **HITL vs AFK**: AFK = no open decisions, no approvals, no required human interaction. If in doubt, mark as HITL.
 
 ## Composability
 

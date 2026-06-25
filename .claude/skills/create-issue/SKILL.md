@@ -26,24 +26,13 @@ Parse the input:
 
 ---
 
-## Iron Law
-
-```
-NO ISSUE WITHOUT PROPER TEMPLATE
-NO APPENDING WITHOUT PRESERVING ORIGINAL BODY
-```
-
----
-
 ## Rationalization Prevention
 
 | Excuse | Reality |
 |--------|---------|
 | "This work has multiple phases but they're small" | Multiple phases = sub-issues. Use create-sub-issues. |
 | "User didn't specify labels" | Infer labels from content. Always label. |
-| "Scope is obvious, skip the template" | Template is not optional. Every issue gets it. |
 | "This user story is close enough" | Must follow "As a [role], I want [capability] so that [benefit]" exactly. |
-| "I'll just edit the existing issue body" | APPEND ONLY. Never modify original. |
 
 ---
 
@@ -70,16 +59,18 @@ echo "REPO=$REPO"
 
 ### 1. Determine mode
 
-- **Append mode** (issue number provided): add content as a comment using `gh issue comment <number> --repo $REPO --body "..."`. Never overwrite the original issue body.
-- **Create mode** (no issue number): proceed to step 2.
+- **Append mode** (issue number provided): use the conversation context (excluding the issue number itself) as the comment body. Run `gh issue comment <number> --repo $REPO --body "..."`. Never overwrite the original issue body.
+- **Create mode** (no issue number): proceed to step 2. If context does not contain sufficient information to populate the template, ask: "What should this issue cover?"
 
 ### 2. Assess scope
 
 Before creating, evaluate the work scope:
-- If the work involves **multiple vertical slices**: delegate to `create-sub-issues`.
+- **Vertical slice** = a change that cuts through schema, service, and API. If the work requires more than one such slice, delegate to `create-sub-issues`.
 - If the work is a **single coherent unit**: proceed to create.
 
 ### 3. Create the issue
+
+If `gh issue create` exits non-zero, surface the error and stop. Do not fabricate a URL.
 
 ```bash
 gh issue create --repo $REPO \
@@ -119,8 +110,8 @@ Print the created issue URL and a one-line summary.
 
 1. **Append-only for existing issues**: never modify the original body. Always add a comment.
 2. **Abort on inaccessible links**: stop and tell the user what to set up.
-3. **Scope check**: if work is too large for a single issue, delegate to `create-sub-issues`.
-4. **Human-readable titles**: no dev jargon or internal planning terms ("tracer bullet", "app-context"). Write titles anyone on the team can understand.
+3. **Scope check**: if work requires more than one vertical slice (schema + service + API), delegate to `create-sub-issues`.
+4. **Human-readable titles**: no dev jargon or internal planning terms. If unsure whether a term is jargon, prefer a plain-English paraphrase and note the original term in implementation details.
 5. **Always label**: infer appropriate labels if the user didn't specify.
 
 ## Composability

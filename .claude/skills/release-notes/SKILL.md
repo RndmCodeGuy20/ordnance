@@ -24,7 +24,7 @@ Every release note has exactly two parts:
 - **X** = the value or outcome the user derives
 - **Y** = the job they are trying to do
 
-The verb at the start should match the nature of the value. Use "Achieve", "Debug", "Organise", "Control", "Track", "Manage", etc. Never use generic verbs like "Improve" or "Enable" that could apply to anything.
+The verb at the start should match the nature of the value. Use "Achieve", "Debug", "Organise", "Control", "Track", "Manage", etc. Never use generic verbs like "Improve" or "Enable" that could apply to anything. When two verbs are equally valid, prefer the one that names the user's action rather than the system's capability (e.g. "Organise" over "Manage" when the user is doing the organising).
 
 ### Description
 2–3 sentences that:
@@ -38,10 +38,9 @@ The verb at the start should match the nature of the value. Use "Achieve", "Debu
 
 > The best release notes feel like a conversation with a knowledgeable friend who's excited to show you something cool, rather than a dry technical document.
 
-- Write as if telling someone what they can now do — not what was built
 - Be specific and concrete — name the surface, the interaction, the result
 - Avoid passive voice ("has been added", "is now supported") — use active voice
-- No filler adjectives — "seamlessly", "powerful", "robust", "easily" add nothing
+- Banned adjectives: "seamlessly", "powerful", "robust", "easily", "better", "improved"
 - No hedging — don't say "helps you" when you can say what it actually does
 - Short sentences over long ones
 
@@ -67,6 +66,7 @@ Ask two questions before writing:
 1. "What could the user not do before this, and what can they do now?"
 2. "Where in the product does this show up?"
 
+If the user cannot answer question 1, do not write. Explain that the before/after state is required to frame the job correctly.
 Do not write without knowing the before/after state.
 
 ---
@@ -80,7 +80,7 @@ What is the user trying to accomplish? Frame it as a verb phrase — "organise d
 What outcome does completing that job produce? This is X in the heading. It should be a result, not a feature — "faster debugging", "no manual reconfiguration", "organised data layer".
 
 **Step 3: Draft the heading**
-Try 2–3 heading variants before settling. Test: if someone reads only the heading, do they understand what changed and why it matters?
+Try 2–3 heading variants before settling. Test: if someone reads only the heading, do they understand what changed and why it matters? When working interactively, present all variants to the user. When a single output is expected, pick the strongest and note why.
 
 **Step 4: Draft the description**
 Lead with the mechanism (what changed and where), then connect to the outcome. Include at least one specific detail.
@@ -103,7 +103,7 @@ Lead with the mechanism (what changed and where), then connect to the outcome. I
 
 ### ✅ Strong
 
-**Heading:** Debug easily with event errors integrated into the debugger
+**Heading:** Debug event errors directly from the debugger
 **Description:** Event error messages now appear directly in the Debugger, helping developers quickly identify whether the issue is with a page, component, or query. Each message includes the associated action, making debugging faster and efficient.
 
 ---

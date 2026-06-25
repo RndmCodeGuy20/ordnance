@@ -28,7 +28,7 @@ git ls-remote --heads origin main develop 2>/dev/null
 Base branch detection (if not provided via `$ARGUMENTS`):
 1. If `origin/main` exists → use `main`
 2. Else if `origin/develop` exists → use `develop`
-3. Else ask the user
+3. Else ask the user: "What should the base branch be? (e.g. main, develop, release/x.y)"
 
 ### Step 2: Gather commits and diff
 
@@ -59,17 +59,17 @@ gh pr list --head "$BRANCH" --json url,title,state,number 2>/dev/null
 - "What this does" = elevator pitch (1-2 sentences, high-level why)
 - "Changes" = concrete what changed — no overlap with summary
 - No file paths or function names unless they ARE the change
-- Change bullets: past tense, one line each, max 5
+- Change bullets: past tense, one line each, max 5 (PR descriptions describe what was done; commit messages describe what the commit does — past tense is correct here)
 - Test steps: action-first, short
 
 **Issue linking:**
-- `Closes #123` if the PR fully resolves the issue; `Relates to: #123` if partial
+- `Closes #123` if all issue acceptance criteria pass after this PR merges; `Relates to: #123` if any criterion remains open
 - Sub-issues: list numbers only — GitHub auto-renders titles
 
 **Conditional sections — include only when applicable:**
 - **Architecture**: new entities, permission models, complex flows. Use mermaid `erDiagram`/`sequenceDiagram`. Skip for bug fixes.
 - **API Reference**: adds or modifies HTTP endpoints. Use a table with Method, Route, Auth, Request, Response. Skip for internal-only changes.
-- **Screenshots**: only if a dev server is running and pages can be captured. Never add an empty Screenshots heading.
+- **Screenshots**: only if a dev server is running. To check: `curl -s -o /dev/null -w '%{http_code}' http://localhost:<port>` — if not 200/301, omit entirely. Never add an empty Screenshots heading.
 
 **PR body template:**
 ```
@@ -109,6 +109,8 @@ gh pr list --head "$BRANCH" --json url,title,state,number 2>/dev/null
 git push -u origin <branch>
 ```
 
+If `git push` exits non-zero, abort and surface the error. Do not create the PR with an unpushed branch.
+
 For monorepos with submodules, push submodules first:
 ```bash
 git submodule foreach 'git push -u origin $(git rev-parse --abbrev-ref HEAD) 2>/dev/null || true'
@@ -131,7 +133,7 @@ PREOF
 )" && cd -
 ```
 
-Capture the submodule PR URLs. If existing PR found, use `gh pr edit` instead.
+Before creating a submodule PR, check if one already exists: `gh pr list --head <branch> --json url,number` in the submodule directory. If a PR exists, use `gh pr edit` instead of creating. Capture all submodule PR URLs.
 
 ### Step 3: Create or update the main PR
 
@@ -166,8 +168,6 @@ Submodule PRs: <urls or "none">
 2. If no commits ahead of base, say so and stop.
 3. Do NOT ask for review before creating — just create. User can re-run to update.
 4. Do NOT create duplicate PRs — check first, use `gh pr edit` to update.
-5. Headings MUST include emoji prefixes exactly as shown.
-6. No interactive steps — run all steps autonomously.
 
 ## Composability
 

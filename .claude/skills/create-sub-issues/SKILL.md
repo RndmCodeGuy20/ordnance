@@ -8,12 +8,7 @@ description: >-
 
 # Create GitHub Sub-Issues
 
-```
-NO ISSUES WITHOUT USER APPROVAL OF BREAKDOWN
-CREATE BLOCKERS BEFORE DEPENDENTS — ALWAYS
-```
-
-**HARD-GATE:** Do NOT create any GitHub issues until the user has approved the breakdown. Even if the breakdown came from a pre-approved plan, quiz for HITL/AFK classification and dependency ordering.
+Create GitHub sub-issues from an approved plan breakdown. Creates in dependency order and attaches each immediately.
 
 User input: $ARGUMENTS
 
@@ -33,10 +28,11 @@ Parse the input:
 
 ## Link Guard
 
-Verify access to any linked content before proceeding:
-- **GitHub** → `gh auth status`. Abort → "Run `gh auth login`"
-
-Do not proceed with partial information.
+Verify GitHub access before proceeding:
+```bash
+gh auth status
+```
+If not authenticated, abort: "Run `gh auth login`"
 
 ---
 
@@ -55,12 +51,10 @@ echo "REPO=$REPO OWNER=$OWNER REPO_NAME=$REPO_NAME"
 
 | Excuse | Reality |
 |--------|---------|
-| "User already approved the plan, skip the quiz" | Plan didn't have HITL/AFK or dependencies. Quiz is mandatory. |
 | "GraphQL sub-issue API failed, just create standalone issues" | Fall back to checklist comment. Tell the user. Don't silently degrade. |
 | "I'll create issues in parallel for speed" | Dependency order is mandatory. Blockers first. |
 | "I'll create all issues first, then attach them" | Attach IMMEDIATELY after each creation. Batching causes orphaned issues. |
 | "This slice is too small for its own issue" | If it's in the plan, it gets an issue. |
-| "This user story is close enough" | Must follow "As a [role], I want [capability] so that [benefit]" exactly. |
 
 ---
 
@@ -68,7 +62,7 @@ echo "REPO=$REPO OWNER=$OWNER REPO_NAME=$REPO_NAME"
 
 ### 1. Load the breakdown
 
-If a plan file was provided, read it. Each slice needs at minimum: title, user story, what to build, and acceptance criteria.
+If a plan file was provided, read it. Each slice requires: title, user story, what to build, and acceptance criteria. If any required field is absent for a slice, ask the user to provide it before creating that issue. Do not fabricate acceptance criteria.
 
 ### 2. Quiz the user
 
@@ -77,7 +71,11 @@ Present the proposed breakdown. For each phase show:
 - **Type**: HITL / AFK
 - **Blocked by**: which issues (if any) must complete first
 - **User stories covered**
-- **Layers**: which layers this phase cuts through
+- **Layers**: which layers this phase cuts through (schema, service, API, tests as applicable)
+
+Note: even if the breakdown came from a pre-approved `decompose-plan` run, re-confirm HITL/AFK and dependency ordering here — the plan may have changed, or this skill may be running without a prior decompose-plan run.
+
+If the user changes dependency ordering during the quiz, re-present the updated ordering for explicit confirmation before proceeding.
 
 Iterate until the user approves.
 
@@ -100,7 +98,7 @@ echo "PARENT_ID=$PARENT_ID"
 
 **Create blockers first** so their issue numbers can be referenced in "Blocked by".
 
-**CRITICAL: For each slice, create the issue AND attach it as a sub-issue BEFORE moving to the next.** Do not batch.
+**For each slice: create the issue AND attach it as a sub-issue BEFORE moving to the next.** Do not batch.
 
 **Step A — Create the issue:**
 
@@ -143,6 +141,8 @@ As a [role], I want [capability] so that [benefit].
 EOF
 )" | grep -oP '\d+$')
 ```
+
+If `CHILD_NUM` is empty, `gh issue create` failed. Abort this slice with the error message. Do not proceed to Step B.
 
 **Step B — Immediately attach as sub-issue:**
 
@@ -190,11 +190,11 @@ All issues attached as sub-issues to #<parent>.
 
 ## Rules
 
-1. **Vertical, not horizontal**: every issue must cut through multiple layers.
+1. **Vertical, not horizontal**: every issue must cut through multiple layers (schema, service, API, tests as applicable).
 2. **Dependency order**: create blocker issues first so real issue numbers can be referenced.
 3. **Quiz before creating**: never create issues until the user approves the breakdown.
-4. **Append-only on parent**: don't close, edit, or comment on the parent issue body.
-5. **HITL vs AFK**: if in doubt, mark as HITL.
+4. **Parent issue**: don't close or edit the parent issue body. A checklist comment on the parent is allowed only as a fallback when `addSubIssue` fails.
+5. **HITL vs AFK**: AFK = no open decisions, no approvals, no required human interaction. If in doubt, mark as HITL.
 6. **Human-readable titles**: no dev jargon. Write titles anyone can understand.
 
 ## Composability
