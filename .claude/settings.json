@@ -1,0 +1,50 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CMD=$(cat | jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE '^[[:space:]]*(npm|yarn)[[:space:]]'; then printf '{\"continue\":false,\"stopReason\":\"Use bun instead of npm/yarn — e.g.: bun install, bun add <pkg>, bun run <script>\"}'; fi",
+            "statusMessage": "Checking package manager..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CMD=$(cat | jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE '^[[:space:]]*grep[[:space:]]'; then printf '{\"continue\":false,\"stopReason\":\"Use rg (ripgrep) instead of grep — faster and respects .gitignore\"}'; fi",
+            "statusMessage": "Checking search tool..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(cat | jq -r '.tool_input.file_path // empty'); if [[ \"$FILE\" =~ \\.(ts|tsx|mts|cts|js|jsx)$ ]]; then bunx --bun prettier --write \"$FILE\" 2>/dev/null || true; bunx --bun eslint --fix --quiet \"$FILE\" 2>/dev/null || true; elif [[ \"$FILE\" =~ \\.go$ ]]; then gofmt -w \"$FILE\" 2>/dev/null || true; fi",
+            "statusMessage": "Formatting..."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bun *)",
+      "Bash(bunx *)",
+      "Bash(rg *)",
+      "Bash(gofmt *)",
+      "Bash(go build *)",
+      "Bash(go test *)",
+      "Bash(go vet *)",
+      "Bash(golangci-lint *)"
+    ]
+  }
+}
