@@ -10,16 +10,6 @@
             "statusMessage": "Checking package manager..."
           }
         ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "CMD=$(cat | jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE '^[[:space:]]*grep[[:space:]]'; then printf '{\"continue\":false,\"stopReason\":\"Use rg (ripgrep) instead of grep — faster and respects .gitignore\"}'; fi",
-            "statusMessage": "Checking search tool..."
-          }
-        ]
       }
     ],
     "PostToolUse": [

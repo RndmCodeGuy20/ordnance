@@ -126,20 +126,21 @@ For each endpoint, define:
 - **Request body** (POST/PUT/PATCH) — JSON shape with types
 - **Response body** — JSON shape with types, wrapped in envelope
 
-**Success envelope:**
+**Success envelope — single resource:**
 ```json
-// Single resource
 { "data": { "id": "ord_abc123", "status": "PENDING", "created_at": "2024-01-15T10:30:00Z" } }
+```
 
-// Collection
-{ "data": [...], "pagination": { "next_cursor": "cursor_xyz", "has_more": true } }
+**Success envelope — collection:**
+```json
+{ "data": [...], "next_cursor": "cursor_xyz", "has_more": true }
 ```
 
 **HTTP status mapping:**
 | Status | When |
 |---|---|
 | `200 OK` | Read or update |
-| `201 Created` | Creation — include `Location: /v1/orders/ord_abc123` header |
+| `201 Created` | Creation — include `Location` header with full URI to the new resource |
 | `204 No Content` | Delete |
 | `400 Bad Request` | Invalid request shape or params |
 | `401 Unauthorized` | Missing or invalid credentials |
@@ -147,7 +148,7 @@ For each endpoint, define:
 | `404 Not Found` | Resource doesn't exist |
 | `409 Conflict` | State conflict (duplicate, already cancelled) |
 | `422 Unprocessable Entity` | Valid syntax, failed business validation |
-| `429 Too Many Requests` | Rate limited |
+| `429 Too Many Requests` | Rate limited — include `Retry-After` header |
 | `500 Internal Server Error` | Unexpected server error |
 
 **Rule:** Never return `200 OK` with `"success": false`. HTTP status IS the status.
@@ -181,7 +182,7 @@ Default: cursor-based. Present default and prompt:
 
 Filtering convention:
 ```
-GET /v1/orders?status=PENDING&created_after=2024-01-01&sort=created_at:desc&limit=20&after=cursor_xyz
+GET /v1/orders?status=PENDING&created_after=2024-01-01T00:00:00Z&sort=created_at:desc&limit=20&after=cursor_xyz
 ```
 
 ---
@@ -214,7 +215,8 @@ Flag any hits and propose fixes. Confirm before writing.
 
 ## Section 10: Open questions
 
-List any decisions deferred to implementation:
+List any decisions deferred to implementation. Flag these before writing the doc — unresolved questions should be acknowledged, not silently skipped.
+
 - Business rules not yet defined
 - Auth edge cases
 - Rate limit thresholds
@@ -224,7 +226,7 @@ List any decisions deferred to implementation:
 
 ## Write the design doc
 
-Save to `./docs/api/<api-name>-design.md`. Create `./docs/api/` if it doesn't exist.
+Check `./docs/api/` for an existing file matching the API name — if found, update it. Otherwise create `./docs/api/<api-name>-design.md` (create the directory if needed). Confirm the path with the user before writing.
 
 Structure:
 ```markdown
@@ -269,7 +271,7 @@ Structure:
 2. **Conventions are defaults, not mandates**: prompt for overrides at auth, pagination, and versioning sections. Record deviations in the doc.
 3. **Anti-patterns check is mandatory**: run Section 9 before writing the file.
 4. **No implementation details**: paths, shapes, and error codes only — no handler names, no DB schema.
-5. **One doc per API**: if re-running, update the existing file.
+5. **One doc per API**: check for an existing file before creating a new one; update in place if found.
 
 ## Composability
 
