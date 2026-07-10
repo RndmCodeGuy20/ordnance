@@ -6,6 +6,7 @@ Curated Claude Code skills for backend engineering work — plan, stress-test, d
 
 | Skill | Use it when |
 |---|---|
+| [`architecture-review`](.claude/skills/architecture-review/SKILL.md) | Any feature that changes system architecture or needs a migration — writes the mandatory pre-dev architecture doc (API/Backend + Data Management) and preps it for reviewer sign-off. |
 | [`design-api`](.claude/skills/design-api/SKILL.md) | Designing a REST API contract section-by-section (resources, endpoints, auth, errors, pagination). |
 | [`grill-me`](.claude/skills/grill-me/SKILL.md) | Interactively stress-testing a plan/design — walks every open decision, one question at a time. |
 | [`red-team`](.claude/skills/red-team/SKILL.md) | Adversarially stress-testing a plan with 4 CIA-Tradecraft-style passes (assumptions check, pre-mortem, rival implementation, on-call postmortem) before it survives to implementation. Run before `grill-me` to kill weak plans fast; findings are graded by severity, not a computed verdict. |
@@ -45,7 +46,7 @@ Curated Claude Code skills for backend engineering work — plan, stress-test, d
 ## Typical flow
 
 ```
-design-api / grill-me / red-team  →  decompose-plan  →  create-sub-issues
+architecture-review (if arch/migration change) → design-api / grill-me / red-team  →  decompose-plan  →  create-sub-issues
         →  (implement, using code-commenting / systematic-debug as needed)
         →  code-review  →  commit  →  pr-create
 ```
